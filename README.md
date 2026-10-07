@@ -2,7 +2,8 @@
 
 **A starter kit for building small interactive tools with AI, the way developers do it.**
 
-From the session *Build It in the Room: What Developers Know About AI That Everyone Else Needs To* at the 2026 National Summit on Artificial Intelligence, Chandler-Gilbert Community College, October 15, 2026. Presented by Jason Reiche and Gordon Inman, Rio Salado College.
+From the session *Build It in the Room: What Developers Know About AI That Everyone Else Needs To* at the 2026 National Summit on Artificial Intelligence, Chandler-Gilbert Community College, October 15, 2026. Presented by Jason Reiche and Gordon Inman, Rio Salado College. 
+> View the [AI Summit 2026 - Build It in the Room Slide Deck](https://docs.google.com/presentation/d/1h_f_ja3coiVQmBmZ_nyfQ4VE69ObsK0n4gC314EPqRk/edit?usp=sharing).
 
 ---
 
