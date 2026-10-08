@@ -25,7 +25,7 @@ You don't need to know how to code.
 
 ## Try it
 
-1. **Get a copy.** On GitHub, click **Use this template** (or **Fork**). You can also click **Code > Download ZIP**.
+1. **Get a copy.** Go to [github.com/ExploreLearnMake/build-it-in-the-room](https://github.com/ExploreLearnMake/build-it-in-the-room) and click **Use this template** (or **Fork**). You can also click **Code > Download ZIP**.
 2. **Open the folder in your AI tool.**
 3. **Start the interview.** Copy the prompt from `prompts/01-interview.md` into your AI tool, and add one sentence about your idea.
 4. **Answer the questions.** The AI asks one at a time. When it's done, it writes `docs/SPEC.md`.

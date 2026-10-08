@@ -3,3 +3,6 @@ Thumbs.db
 node_modules/
 .vscode/
 *.log
+
+# Windows / Google Drive folder metadata
+desktop.ini
