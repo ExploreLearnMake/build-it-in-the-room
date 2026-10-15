@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trip Fuel Cost Calculator</title>
+<style>
+  :root {
+    --ink: #10233f;
+    --muted: #4a5a6a;
+    --bg: #ffffff;
+    --panel: #eef3f7;
+    --accent: #1a5e9a;
+    --error: #a4161a;
+    --focus: #b35c00;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.5;
+  }
+  main { max-width: 34rem; margin: 0 auto; padding: 1rem; }
+  h1 { font-size: 1.5rem; margin: 0 0 0.25rem; }
+  .intro { margin: 0 0 1rem; color: var(--muted); }
+  .field { margin-bottom: 0.9rem; }
+  label { display: block; font-weight: 600; margin-bottom: 0.25rem; }
+  .hint { display: block; font-weight: 400; font-size: 0.9rem; color: var(--muted); }
+  input[type="text"] {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.5rem 0.65rem;
+    font: inherit;
+    color: var(--ink);
+    border: 2px solid #6b7c8d;
+    border-radius: 6px;
+    background: #fff;
+  }
+  input[aria-invalid="true"] { border-color: var(--error); }
+  .error { color: var(--error); font-size: 0.95rem; margin: 0.25rem 0 0; }
+  .error:empty { display: none; }
+  .check { display: flex; align-items: center; gap: 0.5rem; min-height: 44px; }
+  .check input { width: 24px; height: 24px; margin: 0; }
+  .check label { margin: 0; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .result {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--panel);
+    border-left: 6px solid var(--accent);
+    border-radius: 6px;
+  }
+  .result p { margin: 0.2rem 0; }
+  .total { font-size: 1.6rem; font-weight: 700; }
+  .note { font-size: 0.85rem; color: var(--muted); margin-top: 1rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Trip Fuel Cost Calculator</h1>
+  <p class="intro">Estimate what a drive will cost in gas. Nothing you type leaves this page.</p>
+
+  <form id="calc" novalidate>
+    <div class="field">
+      <label for="distance">One-way distance <span class="hint">in miles, for example 120</span></label>
+      <input type="text" id="distance" inputmode="decimal" autocomplete="off" aria-describedby="distance-error">
+      <p class="error" id="distance-error"></p>
+    </div>
+
+    <div class="field check">
+      <input type="checkbox" id="roundtrip" checked>
+      <label for="roundtrip">Round trip (doubles the distance)</label>
+    </div>
+
+    <div class="field">
+      <label for="mpg">Fuel economy <span class="hint">in miles per gallon, for example 30</span></label>
+      <input type="text" id="mpg" inputmode="decimal" autocomplete="off" aria-describedby="mpg-error">
+      <p class="error" id="mpg-error"></p>
+    </div>
+
+    <div class="field">
+      <label for="price">Gas price <span class="hint">in dollars per gallon, for example 3.60</span></label>
+      <input type="text" id="price" inputmode="decimal" autocomplete="off" aria-describedby="price-error">
+      <p class="error" id="price-error"></p>
+    </div>
+
+    <div class="field">
+      <label for="people">People sharing the cost <span class="hint">optional, whole number</span></label>
+      <input type="text" id="people" inputmode="numeric" autocomplete="off" value="1" aria-describedby="people-error">
+      <p class="error" id="people-error"></p>
+    </div>
+  </form>
+
+  <section class="result" aria-labelledby="result-heading">
+    <h2 id="result-heading" style="font-size:1.1rem;margin:0 0 0.4rem;">Estimate</h2>
+    <div id="result" aria-live="polite" aria-atomic="true">
+      <p>Enter a distance, fuel economy, and gas price to see the cost.</p>
+    </div>
+  </section>
+
+  <p class="note">An estimate only. Real costs vary with traffic, terrain, and how you drive.</p>
+</main>
+
+<script>
+/**
+ * Trip Fuel Cost Calculator.
+ * Single-file embed (ADR-002): no network requests, no storage.
+ * Requirements R1 to R7 are in examples/trip-cost-calculator/SPEC.md.
+ */
+
+/** Input fields, keyed by name, with their validation rules. */
+const FIELDS = {
+  distance: { el: document.getElementById('distance'), label: 'Distance', integer: false, min: 0, allowEmpty: false },
+  mpg:      { el: document.getElementById('mpg'),      label: 'Fuel economy', integer: false, min: 0, allowEmpty: false },
+  price:    { el: document.getElementById('price'),    label: 'Gas price', integer: false, min: 0, allowEmpty: false },
+  people:   { el: document.getElementById('people'),   label: 'People', integer: true, min: 1, allowEmpty: true }
+};
+
+const roundTrip = document.getElementById('roundtrip');
+const resultBox = document.getElementById('result');
+
+/** Formats a number as US dollars, rounded to cents. */
+const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+
+/**
+ * Reads and validates one field.
+ * @param {string} name - Key in FIELDS.
+ * @param {boolean} showErrors - Whether to display an error message for this field.
+ * @returns {{value: (number|null), state: ('ok'|'empty'|'invalid')}} The parsed value and its state.
+ */
+function readField(name, showErrors) {
+  const f = FIELDS[name];
+  const raw = f.el.value.trim().replace(/[$,]/g, '');
+  const errorEl = document.getElementById(name + '-error');
+  let message = '';
+  let state = 'ok';
+  let value = null;
+
+  if (raw === '') {
+    state = 'empty';
+    message = f.label + ' is required.';
+    if (f.allowEmpty) { value = 1; state = 'ok'; message = ''; }
+  } else {
+    value = Number(raw);
+    if (!Number.isFinite(value)) {
+      state = 'invalid';
+      message = f.label + ' must be a number.';
+    } else if (f.integer && !Number.isInteger(value)) {
+      state = 'invalid';
+      message = f.label + ' must be a whole number.';
+    } else if (f.integer ? value < f.min : value <= f.min) {
+      state = 'invalid';
+      message = f.integer ? f.label + ' must be at least 1.' : f.label + ' must be more than zero.';
+    }
+  }
+
+  const show = showErrors && state !== 'ok';
+  errorEl.textContent = show ? message : '';
+  f.el.setAttribute('aria-invalid', show ? 'true' : 'false');
+  return { value: state === 'ok' ? value : null, state };
+}
+
+/**
+ * Calculates gallons used and fuel cost for a trip.
+ * @param {number} oneWayMiles - One-way distance in miles.
+ * @param {boolean} isRoundTrip - Whether to double the distance.
+ * @param {number} mpg - Fuel economy in miles per gallon.
+ * @param {number} pricePerGallon - Gas price in dollars per gallon.
+ * @param {number} people - Number of people sharing the cost.
+ * @returns {{miles: number, gallons: number, total: number, perPerson: number}} Trip figures.
+ */
+function calculate(oneWayMiles, isRoundTrip, mpg, pricePerGallon, people) {
+  const miles = isRoundTrip ? oneWayMiles * 2 : oneWayMiles;
+  const gallons = miles / mpg;
+  const total = gallons * pricePerGallon;
+  return { miles, gallons, total, perPerson: total / people };
+}
+
+/**
+ * Validates all inputs and updates the result area.
+ * @param {Event} [event] - The input event, used to decide which field may show an error.
+ */
+function update(event) {
+  const touched = event && event.target && event.target.id;
+  const values = {};
+  let ready = true;
+
+  for (const name of Object.keys(FIELDS)) {
+    const showErrors = FIELDS[name].el.dataset.touched === 'true' || name === touched;
+    const r = readField(name, showErrors);
+    if (r.state !== 'ok') ready = false;
+    values[name] = r.value;
+  }
+
+  if (!ready) {
+    resultBox.innerHTML = '<p>Enter a distance, fuel economy, and gas price to see the cost.</p>';
+    return;
+  }
+
+  const t = calculate(values.distance, roundTrip.checked, values.mpg, values.price, values.people);
+  const milesText = t.miles.toLocaleString('en-US', { maximumFractionDigits: 1 });
+  const gallonsText = t.gallons.toLocaleString('en-US', { maximumFractionDigits: 1 });
+  let html =
+    '<p class="total">' + money.format(t.total) + '</p>' +
+    '<p>' + milesText + ' miles, about ' + gallonsText + ' gallons of gas.</p>';
+  if (values.people > 1) {
+    html += '<p><strong>' + money.format(t.perPerson) + ' per person</strong> for ' + values.people + ' people.</p>';
+  }
+  resultBox.innerHTML = html;
+}
+
+for (const name of Object.keys(FIELDS)) {
+  const el = FIELDS[name].el;
+  el.addEventListener('input', update);
+  el.addEventListener('blur', function () { el.dataset.touched = 'true'; update(); });
+}
+roundTrip.addEventListener('change', update);
+document.getElementById('calc').addEventListener('submit', function (e) { e.preventDefault(); });
+</script>
+</body>
+</html>

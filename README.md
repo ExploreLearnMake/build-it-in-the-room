@@ -31,7 +31,10 @@ You don't need to know how to code.
 4. **Answer the questions.** The AI asks one at a time. When it's done, it writes `docs/SPEC.md`.
 5. **Read the spec.** This is the most important step. If something is wrong or missing, say so now. Fixing a sentence is much faster than fixing a finished tool.
 6. **Let it plan and build.** Use prompts 02, 03, and 04 in order. The AI works through a checklist and tells you how to check each piece.
-7. **Test it against the spec.** Every line in the spec should work. If one doesn't, fix the spec or the checklist and build again.
+7. **Try it.** Your tool is one file: `builds/<tool-name>/index.html`. Double-click it to open it in your browser. No internet or login needed.
+8. **Test it against the spec.** Every line in the spec should work. If one doesn't, fix the spec or the checklist and build again.
+
+Want to see a finished one first? Open `builds/trip-cost-calculator/index.html`, then read its SPEC, TAD, and TASKS in `examples/trip-cost-calculator/`.
 
 ## What we already decided for you
 
@@ -56,8 +59,8 @@ If your project needs something different, that's fine. Change the decision on p
 | `docs/ADRs/` | Decisions already made, and why. |
 | `prompts/` | The four prompts, in the order you use them. |
 | `skills/` | Know-how the AI uses, such as how to embed on a website. |
-| `examples/` | A finished spec you can compare yours to. |
-| `builds/` | Where finished tools go, one folder each. |
+| `examples/` | A finished SPEC, TAD, and TASKS for a trip fuel cost calculator, to compare yours to. |
+| `builds/` | Where finished tools go, one folder each. The trip cost calculator is already there. |
 
 ## Before you use it at work
 
@@ -150,6 +153,10 @@ The `title` attribute is required for accessibility. Many LMS editors (Canvas, C
 ### Accessibility (ADR-001)
 
 Target **WCAG 2.2 Level AA**, with WCAG 2.1 AA as the legal floor under the ADA Title II rule. Each build is checked three ways: a keyboard-only pass, an automated scan (WAVE, axe, or your institution's tool), and a screen reader spot check where possible. Automated tools catch only part of the problems, so the manual passes are not optional.
+
+### Previewing and sharing
+
+The file in `builds/` is the finished product. To preview it, open it in any browser. In Claude, you can also ask to see the file as a code artifact, which renders it in the chat and makes the code easy to copy. To share it with others, publish it on GitHub Pages (above) or any approved static host.
 
 ### Using a different AI tool
 

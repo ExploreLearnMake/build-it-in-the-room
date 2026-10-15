@@ -11,5 +11,6 @@ how to verify it. Do not add features that are not in the spec.
 
 When all tasks are done, fill in the test results table in docs/TASKS.md with
 pass or fail for every requirement, and list any accessibility checks I still
-need to do by hand. Finish by giving me the iframe embed code.
+need to do by hand. Finish by telling me how to open the file in a browser
+to test it, and give me the iframe embed code.
 ```
